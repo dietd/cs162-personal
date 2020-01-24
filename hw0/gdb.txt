@@ -8,17 +8,17 @@ c.
 
 d.
 
-    *
+    * argv points to the address 0x7fffffffe6fa
 
 e.
 
-    *
+    * what is at the address of argv is "/home/vagrant/code/personal/hw0/map" or the program name
 
 f.
 
 g.
 
-    *
+    * The address of recur is 0x5555555546cd.
 
 h.
 
@@ -30,7 +30,23 @@ k.
 
 l.
 
-    *
+    *rax            0x2      2
+rbx            0x0      0
+rcx            0x0      0
+rdx            0x0      0
+rsi            0x555555756340   93824994337600
+rdi            0x1      1
+rbp            0x7fffffffe390   0x7fffffffe390
+rsp            0x7fffffffe370   0x7fffffffe370
+r8             0x0      0
+r9             0x0      0
+r10            0x555555756010   93824994336784
+r11            0x246    582
+r12            0x555555554580   93824992232832
+r13            0x7fffffffe4b0   140737488348336
+r14            0x0      0
+r15            0x0      0
+rip            0x5555555546fa   0x5555555546fa <recur+45>
 
 m.
 
@@ -52,7 +68,9 @@ u.
 
 v.
 
-    *
+    *mov    $0x0,%eax                                        │
+   │0x55555555470e <recur+65>               leaveq                                                  │
+   │0x55555555470f <recur+66>               retq 
 
 w.
 

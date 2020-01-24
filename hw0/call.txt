@@ -1,18 +1,32 @@
-1.
+1. The instructions might be this in the map function which sets up recur(3):
+   movl	%eax, -12(%ebp)
+	subl	$12, %esp
+	pushl	$3
+	call	recur@PLT
+   However in the recur functions we have recur(i - 1):
+movl    8(%ebp), %eax
+        subl    $1, %eax
+        subl    $12, %esp
+        pushl   %eax
+        call    recur
 
-2.
+2. The text contains the actual code within those files while the data function has
 
-3.
+3. Use the -t flag to get the symbol table entries
 
-4
+4. the g symbol means that the symbol is a global one
+   the O symbol means that the symbol is the name of an object
+   the F symbol means that the symbol is the name of a function
+   the *UND* flag means that the section is referenced in the file but not defined in the file  
 
-5.
+5. We could probably find the symbol for malloc in the standard library object.
 
-6.
+6. The symbol for recur is in the recursion.obj file. The symbol in the symbol table for recurse.obj is:
+00000000 g     F .text	00000052 recur
 
-7.
+7. 
 
-8.
+8. The kind of x86 the VM is running is x86_64 while we are compiling in i386. Thus, the executeable should not really work.
 
-9.
+9. We should have compiled the executable in x86_64.
 

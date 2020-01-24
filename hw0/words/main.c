@@ -46,7 +46,28 @@ WordCount *word_counts = NULL;
  */
 int num_words(FILE* infile) {
   int num_words = 0;
+  char buf[MAX_WORD_LEN];
+  bool isword;
+ 
+  while (fscanf(infile, "%s", buf) >= 1) {
+ 	 int len = strlen(buf);
+	 isword = true;
 
+	 if (len <= 1) {
+		isword = false;
+	 } else {
+	     	for (int iter = 0; iter < len; iter += 1) {
+	         	if (isalpha(buf[iter]) == 0) {
+	             		isword = false;
+		     		break;
+	         	}
+	     	}
+	 }
+
+	 if (isword) {
+	 	num_words += 1;
+	 }
+  }
   return num_words;
 }
 
@@ -57,6 +78,42 @@ int num_words(FILE* infile) {
  * Useful functions: fgetc(), isalpha(), tolower(), add_word().
  */
 void count_words(WordCount **wclist, FILE *infile) {
+	bool isword;
+	char * buf = malloc(sizeof(char) * MAX_WORD_LEN);
+	if (buf == NULL) {
+		perror("malloc");
+		return;
+	}
+
+	while (fscanf(infile, "%s", buf) >= 1) {
+		
+		int len = strlen(buf);
+		isword = true;
+
+		if (len <= 1) {
+			isword = false;	
+		} else { 
+			for (int i = 0; i < len; i += 1) {
+				char ch = buf[i];
+				if (isalpha(ch) == 0) {
+					isword = false;
+					break;
+				}
+				buf[i] = tolower(ch);
+			}
+		}
+
+		if (isword) {
+			printf("%s\n", buf);
+			add_word(wclist, buf);	
+		}
+		
+		buf = malloc(sizeof(char) * MAX_WORD_LEN);
+		if (buf == NULL) {
+			perror("realloc");
+			return;
+		}
+	}
 }
 
 /*
@@ -64,7 +121,9 @@ void count_words(WordCount **wclist, FILE *infile) {
  * Useful function: strcmp().
  */
 static bool wordcount_less(const WordCount *wc1, const WordCount *wc2) {
-  return 0;
+	if (wc1->count == wc2->count)
+		return strcmp(wc1->word, wc2->word) < 0;
+	return wc1->count < wc2->count;
 }
 
 // In trying times, displays a helpful message.
@@ -90,7 +149,6 @@ int main (int argc, char *argv[]) {
 
   FILE *infile = NULL;
 
-  // Variables for command line argument parsing
   int i;
   static struct option long_options[] =
   {
@@ -131,6 +189,19 @@ int main (int argc, char *argv[]) {
     // At least one file specified. Useful functions: fopen(), fclose().
     // The first file can be found at argv[optind]. The last file can be
     // found at argv[argc-1].
+    for (int i = optind; i < argc; i += 1) {
+    	
+	infile = fopen(argv[i], "r");
+	
+	if (infile == NULL) {
+		perror("fopen");
+		return 1;
+	}
+	count_words(&word_counts, infile);
+	total_words += num_words(infile);
+	fclose(infile);
+		
+    }
   }
 
   if (count_mode) {
