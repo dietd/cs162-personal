@@ -86,7 +86,7 @@ void count_words(WordCount **wclist, FILE *infile) {
 	}
 
 	while (fscanf(infile, "%s", buf) >= 1) {
-		
+	        	
 		int len = strlen(buf);
 		isword = true;
 
@@ -104,7 +104,6 @@ void count_words(WordCount **wclist, FILE *infile) {
 		}
 
 		if (isword) {
-			printf("%s\n", buf);
 			add_word(wclist, buf);	
 		}
 		
@@ -198,6 +197,15 @@ int main (int argc, char *argv[]) {
 		return 1;
 	}
 	count_words(&word_counts, infile);
+	fclose(infile);
+	
+	infile = fopen(argv[i], "r");
+
+	if (infile == NULL) {
+		perror("fopen");
+		return 1;
+	}
+	 
 	total_words += num_words(infile);
 	fclose(infile);
 		
