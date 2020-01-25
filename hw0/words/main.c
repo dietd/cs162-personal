@@ -99,41 +99,74 @@ int num_words(FILE* infile) {
  * Useful functions: fgetc(), isalpha(), tolower(), add_word().
  */
 void count_words(WordCount **wclist, FILE *infile) {
-	/* bool isword;
-	char * buf = malloc(sizeof(char) * MAX_WORD_LEN);
-	if (buf == NULL) {
-		perror("malloc");
-		return;
-	}
+  
+  bool isword;
+  int len;
+  char ch;
+  size_t size = 64;
 
-	while (fscanf(infile, "%s", buf) >= 1) {
-	        	
-		int len = strlen(buf);
-		isword = true;
+  char * buf = malloc((sizeof(char) * size) + 1);
+  if (buf == NULL) {
+        perror("malloc");
+        return;
+  }
 
-		if (len <= 1) {
-			isword = false;	
-		} else { 
-			for (int i = 0; i < len; i += 1) {
-				char ch = buf[i];
-				if (isalpha(ch) == 0) {
-					isword = false;
-					break;
-				}
-				buf[i] = tolower(ch);
-			}
+  ch = fgetc(infile);
+
+  while (ch != EOF) {
+
+        //Skip the whitespace lmao
+        while (ch == ' ' || ch == '\n' || ch == '\t') {
+                ch = fgetc(infile);
+                if (ch == EOF) {
+			free(buf);
+                        return;
+                }
+        }
+
+        //Get the word, if word is invalid then don't add anything
+        isword = true;
+        len = 0;
+        while (!(ch == ' ' || ch == '\n' || ch == '\t')) {
+
+                if (ch == EOF) {
+
+                        if (isword && len > 1 && len <= MAX_WORD_LEN) {
+				add_word(wclist, buf);
+				buf = malloc((sizeof(char) * size) + 1);
+  				if (buf == NULL) {
+        				perror("malloc");
+        				return;
+  				}
+                        }
+
+			free(buf);
+                        return;
+                }
+
+                if (!isalpha(ch)) {
+                        isword = false;
+                }
+
+		if (len <= MAX_WORD_LEN) {
+			buf[len] = tolower(ch);
 		}
 
-		if (isword) {
-			add_word(wclist, buf);	
-		}
-		
-		buf = malloc(sizeof(char) * MAX_WORD_LEN);
-		if (buf == NULL) {
+                ch = fgetc(infile);
+                len++;
+        }
+
+        if (isword && len > 1 && len <= MAX_WORD_LEN) {
+                add_word(wclist, buf);
+                buf = malloc((sizeof(char) * size) + 1);
+                if (buf == NULL) {
 			perror("malloc");
-			return;
-		}
-	}*/
+                        return;
+                }
+        }
+  }
+
+  return;
 }
 
 /*
