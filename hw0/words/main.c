@@ -99,7 +99,7 @@ int num_words(FILE* infile) {
  * Useful functions: fgetc(), isalpha(), tolower(), add_word().
  */
 void count_words(WordCount **wclist, FILE *infile) {
-	bool isword;
+	/* bool isword;
 	char * buf = malloc(sizeof(char) * MAX_WORD_LEN);
 	if (buf == NULL) {
 		perror("malloc");
@@ -133,7 +133,7 @@ void count_words(WordCount **wclist, FILE *infile) {
 			perror("malloc");
 			return;
 		}
-	}
+	}*/
 }
 
 /*
