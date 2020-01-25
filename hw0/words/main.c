@@ -83,7 +83,7 @@ int num_words(FILE* infile) {
 		len++;
 	}
 	
-	if (isword && len > 1) {
+	if (isword && len > 1 && len <= MAX_WORD_LEN) {
 		num_words++;
 	}
 
@@ -253,15 +253,15 @@ int main (int argc, char *argv[]) {
 	count_words(&word_counts, infile);
 	fclose(infile);
 	
-	infile = fopen(argv[i], "r");
+	//infile = fopen(argv[i], "r");
 
-	if (infile == NULL) {
-		perror("fopen");
-		return 1;
-	}
+	//if (infile == NULL) {
+	//	perror("fopen");
+	//	return 1;
+	//}
 	 
-	total_words += num_words(infile);
-	fclose(infile);
+	//total_words += num_words(infile);
+	//fclose(infile);
 		
     }
   }
