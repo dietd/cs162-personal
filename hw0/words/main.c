@@ -46,28 +46,49 @@ WordCount *word_counts = NULL;
  */
 int num_words(FILE* infile) {
   int num_words = 0;
-  char buf[MAX_WORD_LEN];
+  int len;
   bool isword;
- 
-  while (fscanf(infile, "%s", buf) >= 1) {
- 	 int len = strlen(buf);
-	 isword = true;
+  char ch;
 
-	 if (len <= 1) {
-		isword = false;
-	 } else {
-	     	for (int iter = 0; iter < len; iter += 1) {
-	         	if (isalpha(buf[iter]) == 0) {
-	             		isword = false;
-		     		break;
-	         	}
-	     	}
-	 }
+  ch = fgetc(infile);
 
-	 if (isword) {
-	 	num_words += 1;
-	 }
+  while (ch != EOF) {
+  	
+	//Skip the whitespace lmao
+	while (ch == ' ' || ch == '\n' || ch == '\t') {		
+		ch = fgetc(infile);
+		if (ch == EOF) {
+			return num_words;
+		}
+	}
+        
+	//Get the word, if word is invalid then don't add anything
+	isword = true;
+	len = 0;
+	while (!(ch == ' ' || ch == '\n' || ch == '\t')) {
+
+		if (ch == EOF) {
+			if (isword && len > 1 && len <= MAX_WORD_LEN) {
+				num_words++;
+				return num_words;
+			}
+			return num_words;
+		}
+
+		if (!isalpha(ch)) {
+			isword = false;
+		}
+
+		ch = fgetc(infile);
+		len++;
+	}
+	
+	if (isword && len > 1 && len <= MAX_WORD_LEN) {
+		num_words++;
+	}
+
   }
+
   return num_words;
 }
 
@@ -109,7 +130,7 @@ void count_words(WordCount **wclist, FILE *infile) {
 		
 		buf = malloc(sizeof(char) * MAX_WORD_LEN);
 		if (buf == NULL) {
-			perror("realloc");
+			perror("malloc");
 			return;
 		}
 	}
