@@ -68,7 +68,7 @@ int num_words(FILE* infile) {
 	while (!(ch == ' ' || ch == '\n' || ch == '\t')) {
 
 		if (ch == EOF) {
-			if (isword && len > 1 && len <= MAX_WORD_LEN) {
+			if (isword && len > 1) {
 				num_words++;
 				return num_words;
 			}
@@ -83,7 +83,7 @@ int num_words(FILE* infile) {
 		len++;
 	}
 	
-	if (isword && len > 1 && len <= MAX_WORD_LEN) {
+	if (isword && len > 1) {
 		num_words++;
 	}
 
