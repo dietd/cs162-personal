@@ -76,7 +76,8 @@ int num_words(FILE* infile) {
 		}
 
 		if (!isalpha(ch)) {
-			isword = false;
+			ch = fgetc(infile);
+			break;
 		}
 
 		ch = fgetc(infile);
@@ -145,7 +146,8 @@ void count_words(WordCount **wclist, FILE *infile) {
                 }
 
                 if (!isalpha(ch)) {
-                        isword = false;
+			ch = fgetc(infile);
+                        break;
                 }
 
 		if (len <= MAX_WORD_LEN) {
