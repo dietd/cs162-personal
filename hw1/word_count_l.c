@@ -52,22 +52,15 @@ word_count_t *find_word(word_count_list_t *wclist, char *word) {
 
 word_count_t *add_word_with_count(word_count_list_t *wclist, char *word,
                                   int count) {
-  if (len_words(wclist) == 0) {
-  	word_count_t * wc = (word_count_t *) malloc(sizeof(struct word_count));
-  	wc->word = word;
-  	wc->count = count;
-	list_push_front(wclist, &wc->elem);
-	return wc;
-  }
 
   word_count_t * temp = find_word(wclist, word);
 
   if (temp != NULL) {
-  	temp->count += 1;
+  	temp->count += count;
 	return temp;
   }
 
-  word_count_t * wc = malloc(sizeof(struct word_count));
+  word_count_t * wc = malloc(sizeof(word_count_t));
   wc->word = word;
   wc->count = count;
   list_push_front(wclist, &wc->elem);
@@ -89,12 +82,11 @@ void fprint_words(word_count_list_t *wclist, FILE *outfile) {
 
 static bool less_list(const struct list_elem *ewc1,
                       const struct list_elem *ewc2, void *aux) {
-   word_count_t * wc1 = list_entry(ewc1, struct word_count, elem);
+  word_count_t * wc1 = list_entry(ewc1, struct word_count, elem);
   word_count_t * wc2 = list_entry(ewc2, struct word_count, elem);
   bool(*fn)(word_count_t *, word_count_t *) = aux;
 
   return (*fn)(wc1, wc2);
-  //return false;
 }
 
 void wordcount_sort(word_count_list_t *wclist,
