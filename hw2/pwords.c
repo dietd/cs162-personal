@@ -31,6 +31,24 @@
 
 #include "word_count.h"
 #include "word_helpers.h"
+typedef struct threadargv{
+  word_count_list_t * wc;
+  char * file;
+} threadargs;
+
+/*
+ * countthread - count routine for thread
+ */
+void * countthread(void * arg) {
+  threadargs * ta = (threadargs *) arg;
+  FILE * fp = fopen(ta->file, "r");
+  if(fp == NULL) {
+	printf("File is wrong");
+	exit(1);
+  }
+  count_words(ta->wc, fp);
+  pthread_exit(NULL);
+}
 
 /*
  * main - handle command line, spawning one thread per file.
@@ -45,6 +63,23 @@ int main(int argc, char *argv[]) {
     count_words(&word_counts, stdin);
   } else {
     /* TODO */
+     int nthreads = argc - 1;
+    pthread_t p[nthreads];
+    for (int iter = 0; iter < nthreads; iter++) {
+    	threadargs * ta = malloc(sizeof(struct threadargv));
+    	ta->wc = &word_counts;
+    	ta->file = argv[iter + 1];
+    	int rc = pthread_create(&p[iter], NULL, countthread, ta);
+	if (rc) {
+		printf("Thread %d wasn't created", iter);
+		exit(1);
+	}
+    }
+
+    for (int iter = 0; iter < nthreads; iter++) {
+    	pthread_join(p[iter], NULL);
+    }
+
   }
 
   /* Output final result of all threads' work. */

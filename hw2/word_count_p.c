@@ -32,28 +32,81 @@
 
 void init_words(word_count_list_t *wclist) {
   /* TODO */
+	list_init(&wclist->lst);
+  pthread_mutex_init(&wclist->lock, NULL);
 }
 
 size_t len_words(word_count_list_t *wclist) {
   /* TODO */
-  return 0;
+   size_t len;
+  pthread_mutex_lock(&wclist->lock);
+  len = list_size(&wclist->lst);
+  pthread_mutex_unlock(&wclist->lock);
+  return len;
 }
 
 word_count_t *find_word(word_count_list_t *wclist, char *word) {
   /* TODO */
+  struct list_elem * e;
+  pthread_mutex_lock(&wclist->lock);
+  for (e = list_begin(&wclist->lst); e != list_end(&wclist->lst); e = list_next(e)) {
+  	word_count_t * wc = list_entry(e, struct word_count, elem);
+	if(strcmp(wc->word, word) == 0) {
+		pthread_mutex_unlock(&wclist->lock);
+		return wc;
+	}
+  }
+  pthread_mutex_unlock(&wclist->lock);
   return NULL;
 }
 
 word_count_t *add_word(word_count_list_t *wclist, char *word) {
   /* TODO */
-  return NULL;
+  pthread_mutex_lock(&wclist->lock);
+
+  word_count_t * wc = NULL;
+  struct list_elem * e;
+  for (e = list_begin(&wclist->lst); e != list_end(&wclist->lst); e = list_next(e)) {
+        word_count_t * wc = list_entry(e, struct word_count, elem);
+        if(strcmp(wc->word, word) == 0) {
+		wc->count++;
+		pthread_mutex_unlock(&wclist->lock);
+                return wc;
+        }
+  }
+   
+  wc = malloc(sizeof(struct word_count));
+  wc->word = word;
+  wc->count = 1;
+  list_push_front(&wclist->lst, &wc->elem);
+  pthread_mutex_unlock(&wclist->lock);
+  return wc; 
 }
 
 void fprint_words(word_count_list_t *wclist, FILE *outfile) {
   /* TODO */
+	struct list_elem * e;
+  //printf("%ld", len_words(wclist));
+  for (e = list_begin(&wclist->lst); e != list_end(&wclist->lst); e = list_next(e)) {
+	    word_count_t * wc = list_entry(e, struct word_count, elem);
+            fprintf(outfile, "%8d\t%s\n", wc->count, wc->word);
+  }
+}
+
+static bool less_list(const struct list_elem *ewc1,
+                      const struct list_elem *ewc2, void *aux) {
+  /* TODO */
+
+  word_count_t * wc1 = list_entry(ewc1, struct word_count, elem);
+  word_count_t * wc2 = list_entry(ewc2, struct word_count, elem);
+  bool(*fn)(word_count_t *, word_count_t *) = aux;
+
+  return (*fn)(wc1, wc2);
+
 }
 
 void wordcount_sort(word_count_list_t *wclist,
                     bool less(const word_count_t *, const word_count_t *)) {
   /* TODO */
+	 list_sort(&wclist->lst, less_list, less);
 }
