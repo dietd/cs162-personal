@@ -330,7 +330,7 @@ int main(unused int argc, unused char *argv[]) {
                  	cmd[i] = tokens_get_token(tokens, i);
               	}
               	cmd[len] = NULL;
-              	execvp(cmd[0], cmd);
+              	
 		char buf[16] = "go bears";
 		write(STDOUT_FILENO, buf, 16);
 		return 0;
@@ -353,7 +353,7 @@ int main(unused int argc, unused char *argv[]) {
                         cmd[i] = tokens_get_token(tokens, i);
                 }
                 cmd[len] = NULL;
-                execvp(cmd[0], cmd);
+               
 	   	return 0;
 	   } else {
 		close(fd[0]);
