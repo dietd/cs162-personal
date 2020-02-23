@@ -221,9 +221,7 @@ int run_cmd(struct tokens * tokens, int fd_in, int fd_out) {
 	      int status;
 	      waitpid(cpid, &status, WUNTRACED);
 	    
-	      tcsetpgrp(shell_terminal, shell_pgid);
-	      //signal(SIGTTOU, SIG_DFL);
-	      //tcsetpgrp(0, shell_pgid); 
+	      tcsetpgrp(shell_terminal, shell_pgid); 
 
       } else {
       	perror("can't run the executable");
