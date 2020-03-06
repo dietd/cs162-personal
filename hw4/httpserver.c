@@ -184,10 +184,32 @@ void handle_files_request(int fd) {
 		serve_directory(fd, path);
 		return;
 	}
+  } else {
+  	http_start_response(fd, 404);
+  	http_send_header(fd, "Content-Type", "text/html");
+  	http_end_headers(fd);
   }
 
   close(fd);
   return;
+}
+
+struct proxy_info {
+	int read_fd;
+	int write_fd;
+};
+
+void proxy_helper(void * arg) {
+	struct proxy_info * info = arg;
+	int read_fd = info->read_fd;
+	int write_fd = info->write_fd;
+	char buf[1024];
+	size_t read_len;
+	while ((read_len = read(read_fd,buf, 1024)) > 0) {
+		if (write(write_fd, buf, read_len) <= 0)
+		       break;	
+	}
+	pthread_exit(0);	
 }
 
 /*
@@ -254,6 +276,27 @@ void handle_proxy_request(int fd) {
 
   /* TODO: PART 4 */
 
+  pthread_t p0, p1;
+  struct proxy_info * info0 = malloc(sizeof(struct proxy_info));
+  struct proxy_info * info1 = malloc(sizeof(struct proxy_info));
+  
+  info0->read_fd = fd;
+  info0->write_fd = target_fd;
+  
+  info1->read_fd = target_fd;
+  info1->write_fd = fd;
+
+  pthread_create(&p0, NULL, (void *) proxy_helper, (void *) info0);
+  pthread_create(&p1, NULL, (void *) proxy_helper, (void *) info1);
+  
+  pthread_join(p0, NULL);
+  pthread_join(p1, NULL);
+  
+  free(info0);
+  free(info1);
+
+  close(target_fd);
+  close(fd);
 }
 
 #ifdef POOLSERVER
@@ -323,7 +366,7 @@ void serve_forever(int *socket_number, void (*request_handler)(int)) {
    * play around with this value during performance testing.
    */
 
-  if (bind(*socket_number, (struct sockaddri_in *) &server_address,
+  if (bind(*socket_number, &server_address,
         sizeof(server_address)) == -1) {
     perror("Failed to bind on socket");
     exit(errno);
