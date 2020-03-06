@@ -121,6 +121,8 @@ void serve_directory(int fd, char *path) {
 	write(fd, endtag, strlen(endtag));
   }
 
+  close(dir);
+  close(dir2);
   close(fd);
 }
 
@@ -313,7 +315,15 @@ void *handle_clients(void *void_request_handler) {
   pthread_detach(pthread_self());
 
   /* TODO: PART 7 */
-
+  
+  wq_t * wq = &work_queue;
+  int fd;
+  
+  while(1) {
+	fd = wq_pop(wq);
+	request_handler(fd);
+	//close(fd);
+  }
 }
 
 /* 
@@ -322,7 +332,13 @@ void *handle_clients(void *void_request_handler) {
 void init_thread_pool(int num_threads, void (*request_handler)(int)) {
 
   /* TODO: PART 7 */
-
+  
+  pthread_t workers[num_threads];
+  wq_init(&work_queue);
+  
+  for (int i = 0; i < num_threads; i += 1) {
+  	pthread_create(&workers[i], NULL, handle_clients, (void *) request_handler);
+  }
 }
 #endif
 
@@ -424,6 +440,12 @@ void serve_forever(int *socket_number, void (*request_handler)(int)) {
      */
 
     /* PART 5 END */
+    int rc = fork();
+    if (rc == 0) {
+    	request_handler(client_socket_number);
+	return;
+    }
+
 #elif THREADSERVER
     /* 
      * TODO: PART 6 BEGIN
@@ -436,6 +458,9 @@ void serve_forever(int *socket_number, void (*request_handler)(int)) {
      */
 
     /* PART 6 END */
+    pthread_t p;
+    pthread_create(&p, NULL, request_handler, client_socket_number);
+
 #elif POOLSERVER
     /* 
      * TODO: PART 7 BEGIN
@@ -444,7 +469,7 @@ void serve_forever(int *socket_number, void (*request_handler)(int)) {
      * client's socket number to the work queue. A thread
      * in the thread pool will send a response to the client.
      */
-
+    wq_push(&work_queue, client_socket_number);
     /* PART 7 END */
 #endif
   }
