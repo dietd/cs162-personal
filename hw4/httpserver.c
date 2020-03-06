@@ -37,22 +37,91 @@ int server_proxy_port;
  */
 void serve_file(int fd, char *path) {
 
+  int file_fd;
+  file_fd = open(path, O_RDONLY);
+  unsigned long int len = lseek(file_fd, 0, SEEK_END);
+  char lenbuf[50];
+  sprintf(lenbuf, "%lu", len);
+  close(file_fd);
+
   http_start_response(fd, 200);
   http_send_header(fd, "Content-Type", http_get_mime_type(path));
-  http_send_header(fd, "Content-Length", "0"); // Change this too
+  http_send_header(fd, "Content-Length", lenbuf);
   http_end_headers(fd);
 
   /* TODO: PART 2 */
 
+  file_fd = open(path, O_RDONLY); 
+  
+  char data[1024];
+  size_t bytes_read;
+  while ((bytes_read = read(file_fd, data, sizeof(data))) > 0) {
+  	write(fd, data, bytes_read);
+  }
+
+  close(file_fd);
+  close(fd);
 }
 
 void serve_directory(int fd, char *path) {
-  http_start_response(fd, 200);
-  http_send_header(fd, "Content-Type", http_get_mime_type(".html"));
-  http_end_headers(fd);
+  //http_start_response(fd, 200);
+  //http_send_header(fd, "Content-Type", http_get_mime_type(".html"));
+  //http_end_headers(fd);
 
   /* TODO: PART 3 */
 
+    //Open up the DIR and have pointers to the structure
+
+  struct dirent * dp;
+  struct dirent * dp2;
+  DIR * dir = opendir(path);
+  DIR * dir2 = opendir(path);
+
+  if (dir == NULL || dir2 == NULL) {
+	perror("opendir");
+  	return;
+  }
+
+  //Strings to use; stored in static memory not the stack
+
+  char * indexstr = "/index.html";
+
+  char * begintag = "<a href=\"";
+  char * midtag = "\">";
+  char * endtag = "</a>\n";
+
+  size_t taglength = strlen(begintag) + strlen(midtag) + strlen(endtag);
+
+  char lenbuf[50];
+  size_t numchars = 0;
+
+  while ((dp = readdir(dir)) != NULL) {
+  	if (strcmp(dp->d_name, indexstr + 1) == 0) {
+		char * indexpath = malloc(strlen(path) + strlen(indexstr) + 1);
+                memcpy(indexpath, path, strlen(path));
+                memcpy(indexpath + strlen(path), indexstr, strlen(indexstr) + 1);
+                serve_file(fd, indexpath);
+		return;
+	}
+	numchars += 2 * strlen(dp->d_name) + taglength;
+  }
+
+  sprintf(lenbuf, "%zu", numchars);
+
+  http_start_response(fd, 200);
+  http_send_header(fd, "Content-Type", http_get_mime_type(".html"));
+  http_send_header(fd, "Content-Length", lenbuf);
+  http_end_headers(fd);
+
+  while ((dp2 = readdir(dir2)) != NULL) {
+  	write(fd, begintag, strlen(begintag));
+	write(fd, dp2->d_name, strlen(dp2->d_name));
+	write(fd, midtag, strlen(midtag));
+	write(fd, dp2->d_name, strlen(dp2->d_name));
+	write(fd, endtag, strlen(endtag));
+  }
+
+  close(fd);
 }
 
 
@@ -104,6 +173,18 @@ void handle_files_request(int fd) {
    * determine when to call serve_file() or serve_directory() depending
    * on `path`. Make your edits below here in this function.
    */
+
+  struct stat file_stat;
+
+  if (stat(path, &file_stat) == 0) {
+  	if (S_ISREG(file_stat.st_mode)) {
+		serve_file(fd, path);
+		return;
+	} else if (S_ISDIR(file_stat.st_mode)) {
+		serve_directory(fd, path);
+		return;
+	}
+  }
 
   close(fd);
   return;
@@ -242,6 +323,16 @@ void serve_forever(int *socket_number, void (*request_handler)(int)) {
    * play around with this value during performance testing.
    */
 
+  if (bind(*socket_number, (struct sockaddri_in *) &server_address,
+        sizeof(server_address)) == -1) {
+    perror("Failed to bind on socket");
+    exit(errno);
+  }
+
+  if (listen(*socket_number, 1024) == -1) {
+    perror("Failed to listen on socket");
+    exit(errno);
+  }
 
   /* PART 1 END */
   printf("Listening on port %d...\n", server_port);
