@@ -16,5 +16,5 @@ void* mm_realloc(void* ptr, size_t size);
 void mm_free(void* ptr);
 
 //TODO: Add any implementation details you might need to this file
-
+size_t mm_size(void* ptr);
 #endif
