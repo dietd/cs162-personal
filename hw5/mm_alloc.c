@@ -20,7 +20,7 @@ struct meta {
 
 struct meta * head;
 
-/* Split's the block inputted size of the contents */
+/* Split's the block inputted by size of the new contents */
 void split (struct meta * m, size_t size) {
 
   	 struct meta n;
@@ -40,6 +40,8 @@ void split (struct meta * m, size_t size) {
 
 void* mm_malloc(size_t size)
 {
+  if (size == 0)
+	  return NULL;
   
   /* Base case if we are starting the heap */
   if (head == NULL) {
@@ -141,6 +143,12 @@ void* mm_realloc(void* ptr, size_t size)
   /*Free the pointer lmao*/
   struct meta * m = (struct meta *) (ptr - sizeof(struct meta));
   
+  if (size < m->size){
+	split(m, size);
+  	return ptr;
+  }
+
+
   mm_free(ptr);
   
   void * addr = mm_malloc(size);
