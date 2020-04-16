@@ -94,6 +94,10 @@ struct thread
 
     /* Shared between thread.c and synch.c. */
     struct list_elem elem;              /* List element. */
+    
+    void * sbrk;
+    void * syscallesp;
+    void * heap_start;
 
 #ifdef USERPROG
     /* Owned by userprog/process.c. */

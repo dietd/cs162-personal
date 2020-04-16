@@ -219,6 +219,9 @@ load (const char *file_name, void (**eip) (void), void **esp)
   off_t file_ofs;
   bool success = false;
   int i;
+  
+  /* Sets up start of heap for thread */
+  void * heap_start;
 
   /* Allocate and activate page directory. */
   t->pagedir = pagedir_create ();
@@ -296,6 +299,7 @@ load (const char *file_name, void (**eip) (void), void **esp)
                   read_bytes = 0;
                   zero_bytes = ROUND_UP (page_offset + phdr.p_memsz, PGSIZE);
                 }
+	      heap_start = mem_page + read_bytes + zero_bytes;
               if (!load_segment (file, file_page, (void *) mem_page,
                                  read_bytes, zero_bytes, writable))
                 goto done;
@@ -305,6 +309,9 @@ load (const char *file_name, void (**eip) (void), void **esp)
           break;
         }
     }
+
+  t->heap_start = pg_round_down(heap_start);
+  t->sbrk = t->heap_start;
 
   /* Set up stack. */
   if (!setup_stack (esp))

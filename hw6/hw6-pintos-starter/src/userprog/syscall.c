@@ -8,6 +8,9 @@
 #include "filesys/filesys.h"
 #include "filesys/file.h"
 
+#include "threads/palloc.h"
+#include "userprog/pagedir.h"
+
 static void syscall_handler (struct intr_frame *);
 
 void
@@ -98,12 +101,84 @@ syscall_close (int fd)
     }
 }
 
+static void *
+syscall_sbrk (intptr_t increment)
+{
+  
+
+  struct thread * t = thread_current();
+  void * init_sbrk = t->sbrk;
+  if (increment == 0) {
+  	return init_sbrk;
+  }
+
+  if (increment < 0) {
+  	void * d_addr = pg_round_up(init_sbrk + increment); //deallocation address
+        while (d_addr < init_sbrk) {
+                void * upage = d_addr;
+                void * kpage = pagedir_get_page(t->pagedir, upage);
+                if (kpage != NULL) {
+                        palloc_free_page(kpage);
+                        pagedir_clear_page(t->pagedir, upage);
+                }
+                d_addr += PGSIZE;
+        }
+
+	t->sbrk += increment;
+        return init_sbrk;
+  }
+
+  void * cur_addr = pg_round_up(init_sbrk);
+  bool success = true;
+
+  while (cur_addr < init_sbrk + increment)
+  {
+  	void * upage = cur_addr;
+	void * kpage = palloc_get_page(PAL_USER | PAL_ZERO);
+	
+	if (kpage == NULL) {
+		success = false;
+		break;
+	}
+
+	bool writable = true;
+
+	if (pagedir_get_page(t->pagedir, upage) != NULL)
+		return (void *) -1;
+	
+	pagedir_set_page(t->pagedir, upage, kpage, writable);
+
+
+	cur_addr += PGSIZE;
+  }
+
+  if (!success) {
+	void * d_addr = pg_round_up(init_sbrk); //deallocation address
+  	while (d_addr < cur_addr) {
+		void * upage = d_addr;
+		void * kpage = pagedir_get_page(t->pagedir, upage);
+		if (kpage != NULL) {
+			palloc_free_page(kpage);
+			pagedir_clear_page(t->pagedir, upage);
+		}
+		d_addr += PGSIZE;
+	}
+
+	return (void *) -1;
+  }
+
+  t->sbrk += increment;
+  return init_sbrk;
+}
+
 static void
 syscall_handler (struct intr_frame *f)
 {
   uint32_t* args = (uint32_t*) f->esp;
   struct thread* t = thread_current ();
   t->in_syscall = true;
+
+  t->syscallesp = f->esp;
 
   validate_buffer_in_user_region (args, sizeof(uint32_t));
   switch (args[0])
@@ -134,6 +209,10 @@ syscall_handler (struct intr_frame *f)
     case SYS_CLOSE:
       validate_buffer_in_user_region (&args[1], sizeof(uint32_t));
       syscall_close ((int) args[1]);
+      break;
+
+    case SYS_SBRK:
+      f->eax = syscall_sbrk((intptr_t) args[1]);
       break;
 
     default:

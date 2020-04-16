@@ -7,6 +7,8 @@
 #include "threads/vaddr.h"
 #include "userprog/syscall.h"
 
+#include "threads/palloc.h"
+
 /* Number of page faults processed. */
 static long long page_fault_cnt;
 
@@ -170,8 +172,19 @@ page_fault (struct intr_frame *f)
    * assume this; depending on the nature of the fault, the stack may need to
    * be grown.
    */
-  if (user)
-    syscall_exit (-1);
+//  if (user)
+//    syscall_exit (-1);
+
+  void * esp = user ? f->esp : t->syscallesp;
+  bool valid_stack = esp <= fault_addr || fault_addr == f->esp - 4 || fault_addr == f->esp - 32;
+  bool valid_address = esp < PHYS_BASE;
+  if (!valid_stack || !valid_address)
+	  syscall_exit(-1);
+  void * upage = pg_round_down(fault_addr);
+  void * kpage = palloc_get_page(PAL_USER | PAL_ZERO);
+  bool writable = true;
+  bool success = pagedir_get_page(t->pagedir, upage) == NULL && pagedir_set_page(t->pagedir, upage, kpage, writable);
+
 
   /* To implement virtual memory, delete the rest of the function
      body, and replace it with code that brings in the page to

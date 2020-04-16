@@ -23,6 +23,7 @@ enum
     /* Project 3 and optionally project 4. */
     SYS_MMAP,                   /* Map a file into memory. */
     SYS_MUNMAP,                 /* Remove a memory mapping. */
+    SYS_SBRK,
 
     /* Project 4 only. */
     SYS_CHDIR,                  /* Change the current directory. */
