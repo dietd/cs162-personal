@@ -164,8 +164,8 @@ page_fault (struct intr_frame *f)
    * the kernel and end up here. These checks below will allow us to determine
    * that this happened and terminate the process appropriately.
    */
-  if (!user && t->in_syscall && is_user_vaddr (fault_addr))
-    syscall_exit (-1);
+  /*if (!user  && t->in_syscall  && is_user_vaddr (fault_addr))
+    syscall_exit (-1);*/
 
   /*
    * If we faulted in user mode, then we assume it's an invalid memory access
@@ -177,23 +177,19 @@ page_fault (struct intr_frame *f)
 //    syscall_exit (-1);
 
   void * esp = user ? f->esp : t->syscallesp;
-  bool valid_stack = esp <= fault_addr || fault_addr == esp - 4 || fault_addr == esp - 32;
+  bool valid_stack = esp <= fault_addr || fault_addr == f->esp - 4 || fault_addr == f->esp - 32;
   bool valid_address = fault_addr < PHYS_BASE && fault_addr >= 0x08048000;
-  if (!valid_stack || !valid_address)
-	  syscall_exit(-1);
+  if (valid_stack && valid_address) {
   
   void * upage = pg_round_down(fault_addr);
   void * kpage = palloc_get_page(PAL_USER | PAL_ZERO);
-  
   if (kpage == NULL)
-	  syscall_exit(-1);
+	 syscall_exit(-1); 
+  pagedir_set_page(t->pagedir, upage, kpage, true);
   
-  bool writable = true;
-  
-  bool success = pagedir_get_page(t->pagedir, upage) == NULL && pagedir_set_page(t->pagedir, upage, kpage, writable);
-
-  if (!success)
-	  syscall_exit(-1);
+  } else {
+  	syscall_exit(-1);
+  }
 
   /* To implement virtual memory, delete the rest of the function
      body, and replace it with code that brings in the page to
