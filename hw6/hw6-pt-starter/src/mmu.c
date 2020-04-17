@@ -31,7 +31,13 @@ paddr_ptr pd_addr(vaddr_ptr vaddr, paddr_ptr pdpt) {
   vaddr_ptr mask = 0xC0000000;
   paddr_ptr index = (paddr_ptr) ((vaddr & mask) >> 30);
   paddr_ptr entry = pdpt + (((paddr_ptr) sizeof(pgd_t)) * index);
-  return pfn_to_addr(((pgd_t *) entry)->pfn);
+  void * buffer = malloc(sizeof(pgd_t));
+  ram_fetch(entry, buffer, sizeof(pgd_t));
+  
+  if (!((pgd_t *) buffer)->present)
+	  return NULL;
+
+  return pfn_to_addr(((pgd_t *) buffer)->pfn);
 }
 
 //Returns the base pointer to the page table
@@ -39,7 +45,13 @@ paddr_ptr pt_addr(vaddr_ptr vaddr, paddr_ptr pdt) {
   vaddr_ptr mask = 0x3FE00000;
   paddr_ptr index = (paddr_ptr) ((vaddr & mask) >> 21);
   paddr_ptr entry = pdt + (((paddr_ptr) sizeof(pmd_t)) * index);
-  return pfn_to_addr(((pmd_t *) entry)->pfn);
+  void * buffer = malloc(sizeof(pmd_t));
+  ram_fetch(entry, buffer, sizeof(pmd_t));
+
+  if (!((pmd_t *) buffer)->present)
+	  return NULL;
+
+  return pfn_to_addr(((pmd_t *) buffer)->pfn);
 }
 
 //Returns the base pointer to the page
@@ -47,7 +59,13 @@ paddr_ptr pg_addr(vaddr_ptr vaddr, paddr_ptr pt) {
   vaddr_ptr mask = 0x001FF000;
   paddr_ptr index = (paddr_ptr) ((vaddr & mask) >> 12);
   paddr_ptr entry = pt + (((paddr_ptr) sizeof(pte_t)) * index);
-  return pfn_to_addr(((pte_t *)entry)->pfn);
+  void * buffer = malloc(sizeof(pte_t));
+  ram_fetch(entry, buffer, sizeof(pte_t));
+  
+  if (!((pte_t*) buffer)->present)
+	  return NULL;
+
+  return pfn_to_addr(((pte_t *) buffer)->pfn);
 }
 
 //Returns the physical address pointer based on the page
@@ -63,11 +81,20 @@ paddr_ptr phys_addr(vaddr_ptr vaddr, paddr_ptr pg) {
 
 int virt_to_phys(vaddr_ptr vaddr, paddr_ptr cr3, paddr_ptr *paddr) {
   paddr_ptr pd = pd_addr(vaddr, cr3); //page directory table
-  printf("%x", pd);
-  paddr_ptr pt =  pt_addr(vaddr, pd);
-  paddr_ptr pg = pg_addr(vaddr, pt);
-  *paddr = phys_addr(vaddr, pg);
-  return 1;
+  if (pd == NULL)
+	  return -1;
+
+  paddr_ptr pt =  pt_addr(vaddr, pd); //page table
+  if (pt == NULL)
+	  return -1;
+
+  paddr_ptr pg = pg_addr(vaddr, pt); //page
+  if (pg == NULL)
+	  return -1;
+
+  *paddr = phys_addr(vaddr, pg); //physical address
+
+  return 0;
 }
 
 char *str_from_virt(vaddr_ptr vaddr, paddr_ptr cr3) {
