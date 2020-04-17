@@ -23,13 +23,13 @@
 //#define pfn_to_addr(pfn) (pfn << PAGE_SHIFT)
 
 paddr_ptr pfn_to_addr(paddr_ptr pfn) {
-  return (paddr_ptr) (pfn << 12);
+  return (paddr_ptr) (pfn << PAGE_SHIFT);
 }
 
 //Returns the base pointer to the page directory table
 paddr_ptr pd_addr(vaddr_ptr vaddr, paddr_ptr pdpt) {
   vaddr_ptr mask = 0xC0000000;
-  paddr_ptr index = (paddr_ptr) ((vaddr & mask) >> 30);
+  paddr_ptr index = (paddr_ptr) ((vaddr & mask) >> PGDIR_SHIFT);
   paddr_ptr entry = pdpt + (((paddr_ptr) sizeof(pgd_t)) * index);
   void * buffer = malloc(sizeof(pgd_t));
   ram_fetch(entry, buffer, sizeof(pgd_t));
@@ -43,7 +43,7 @@ paddr_ptr pd_addr(vaddr_ptr vaddr, paddr_ptr pdpt) {
 //Returns the base pointer to the page table
 paddr_ptr pt_addr(vaddr_ptr vaddr, paddr_ptr pdt) {
   vaddr_ptr mask = 0x3FE00000;
-  paddr_ptr index = (paddr_ptr) ((vaddr & mask) >> 21);
+  paddr_ptr index = (paddr_ptr) ((vaddr & mask) >> PMD_SHIFT);
   paddr_ptr entry = pdt + (((paddr_ptr) sizeof(pmd_t)) * index);
   void * buffer = malloc(sizeof(pmd_t));
   ram_fetch(entry, buffer, sizeof(pmd_t));
@@ -57,7 +57,7 @@ paddr_ptr pt_addr(vaddr_ptr vaddr, paddr_ptr pdt) {
 //Returns the base pointer to the page
 paddr_ptr pg_addr(vaddr_ptr vaddr, paddr_ptr pt) {
   vaddr_ptr mask = 0x001FF000;
-  paddr_ptr index = (paddr_ptr) ((vaddr & mask) >> 12);
+  paddr_ptr index = (paddr_ptr) ((vaddr & mask) >> PAGE_SHIFT);
   paddr_ptr entry = pt + (((paddr_ptr) sizeof(pte_t)) * index);
   void * buffer = malloc(sizeof(pte_t));
   ram_fetch(entry, buffer, sizeof(pte_t));
