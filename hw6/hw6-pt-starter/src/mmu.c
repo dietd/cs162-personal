@@ -34,8 +34,8 @@ paddr_ptr pd_addr(vaddr_ptr vaddr, paddr_ptr pdpt) {
   void * buffer = malloc(sizeof(pgd_t));
   ram_fetch(entry, buffer, sizeof(pgd_t));
   
-  if (!((pgd_t *) buffer)->present)
-	  return NULL;
+//  if (!((pgd_t *) buffer)->present)
+//	  return NULL;
 
   return pfn_to_addr(((pgd_t *) buffer)->pfn);
 }
@@ -48,8 +48,8 @@ paddr_ptr pt_addr(vaddr_ptr vaddr, paddr_ptr pdt) {
   void * buffer = malloc(sizeof(pmd_t));
   ram_fetch(entry, buffer, sizeof(pmd_t));
 
-  if (!((pmd_t *) buffer)->present)
-	  return NULL;
+//  if (!((pmd_t *) buffer)->present)
+//	  return NULL;
 
   return pfn_to_addr(((pmd_t *) buffer)->pfn);
 }
@@ -62,8 +62,8 @@ paddr_ptr pg_addr(vaddr_ptr vaddr, paddr_ptr pt) {
   void * buffer = malloc(sizeof(pte_t));
   ram_fetch(entry, buffer, sizeof(pte_t));
   
-  if (!((pte_t*) buffer)->present)
-	  return NULL;
+//  if (!((pte_t*) buffer)->present)
+//	  return NULL;
 
   return pfn_to_addr(((pte_t *) buffer)->pfn);
 }
@@ -81,16 +81,16 @@ paddr_ptr phys_addr(vaddr_ptr vaddr, paddr_ptr pg) {
 
 int virt_to_phys(vaddr_ptr vaddr, paddr_ptr cr3, paddr_ptr *paddr) {
   paddr_ptr pd = pd_addr(vaddr, cr3); //page directory table
-  if (pd == NULL)
-	  return -1;
+//  if (pd == NULL)
+//	  return -1;
 
   paddr_ptr pt =  pt_addr(vaddr, pd); //page table
-  if (pt == NULL)
-	  return -1;
+//  if (pt == NULL)
+//	  return -1;
 
   paddr_ptr pg = pg_addr(vaddr, pt); //page
-  if (pg == NULL)
-	  return -1;
+//  if (pg == NULL)
+//	  return -1;
 
   *paddr = phys_addr(vaddr, pg); //physical address
 
