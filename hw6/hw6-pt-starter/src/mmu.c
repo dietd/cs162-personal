@@ -35,7 +35,9 @@ paddr_ptr get_addr(void * buffer) {
 bool is_present(void * buffer) {
   int64_t mask = 0x1;
   int64_t entry = * (int64_t *) buffer;
-  return (bool) (entry & mask);
+  if ((entry & mask) == 1)
+	  return true;
+  return false;
 }
 
 
