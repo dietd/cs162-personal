@@ -11,7 +11,7 @@
  * */
 
 
-//#define PMD_PFN_MASK
+//#define PMD_PFN_MASK 
 //#define PTE_PFN_MASK
 //#define PAGE_OFFSET_MASK
 //
@@ -22,14 +22,51 @@
 //
 //#define pfn_to_addr(pfn) (pfn << PAGE_SHIFT)
 
+paddr_ptr pfn_to_addr(paddr_ptr pfn) {
+  return (paddr_ptr) (pfn << 12);
+}
+
+//Returns the base pointer to the page directory table
+paddr_ptr pd_addr(vaddr_ptr vaddr, paddr_ptr pdpt) {
+  vaddr_ptr mask = 0xC0000000;
+  paddr_ptr index = (paddr_ptr) ((vaddr & mask) >> 30);
+  paddr_ptr entry = pdpt + (((paddr_ptr) sizeof(pgd_t)) * index);
+  return pfn_to_addr(((pgd_t *) entry)->pfn);
+}
+
+//Returns the base pointer to the page table
+paddr_ptr pt_addr(vaddr_ptr vaddr, paddr_ptr pdt) {
+  vaddr_ptr mask = 0x3FE00000;
+  paddr_ptr index = (paddr_ptr) ((vaddr & mask) >> 21);
+  paddr_ptr entry = pdt + (((paddr_ptr) sizeof(pmd_t)) * index);
+  return pfn_to_addr(((pmd_t *) entry)->pfn);
+}
+
+//Returns the base pointer to the page
+paddr_ptr pg_addr(vaddr_ptr vaddr, paddr_ptr pt) {
+  vaddr_ptr mask = 0x001FF000;
+  paddr_ptr index = (paddr_ptr) ((vaddr & mask) >> 12);
+  paddr_ptr entry = pt + (((paddr_ptr) sizeof(pte_t)) * index);
+  return pfn_to_addr(((pte_t *)entry)->pfn);
+}
+
+//Returns the physical address pointer based on the page
+paddr_ptr phys_addr(vaddr_ptr vaddr, paddr_ptr pg) {
+  int32_t mask = 0x00000FFF;
+  paddr_ptr index = (paddr_ptr) (vaddr & mask);
+  return index + pg;
+}
 
 /* Translates the virtual address vaddr and stores the physical address in paddr.
  * If a page fault occurs, return a non-zero value, otherwise return 0 on a successful translation.
  * */
 
 int virt_to_phys(vaddr_ptr vaddr, paddr_ptr cr3, paddr_ptr *paddr) {
-  /* TODO */
-
+  paddr_ptr pd = pd_addr(vaddr, cr3); //page directory table
+  printf("%x", pd);
+  paddr_ptr pt =  pt_addr(vaddr, pd);
+  paddr_ptr pg = pg_addr(vaddr, pt);
+  *paddr = phys_addr(vaddr, pg);
   return 1;
 }
 
@@ -70,7 +107,6 @@ int main(int argc, char **argv) {
 
   paddr_ptr cr3 = strtol(argv[2], NULL, 0);
   vaddr_ptr vaddr = strtol(argv[3], NULL, 0);
-
 
   if(virt_to_phys(vaddr, cr3, &translated)){
     printf("Page fault occured at address %p\n", vaddr);
